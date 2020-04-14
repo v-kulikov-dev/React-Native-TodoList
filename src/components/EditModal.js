@@ -17,6 +17,11 @@ export const EditModal = ({ visible, onCancel, value, onSave }) => {
         }
     }
 
+    const cancelHandler = () => {
+        setTitle(value)
+        onCancel()
+    }
+
     return (
         <Modal visible={visible} animationType="slide" transparent={false}>
             <View style={styles.wrap}>
@@ -30,7 +35,7 @@ export const EditModal = ({ visible, onCancel, value, onSave }) => {
                     maxLenght={64}
                 />
                 <View style={styles.buttons}>
-                    <AppButton onPress={onCancel} color={THEME.DANGER_COLOR}>
+                    <AppButton onPress={cancelHandler} color={THEME.DANGER_COLOR}>
                         Cancel
                     </AppButton>
                     <AppButton onPress={saveHandler}>
