@@ -13,6 +13,7 @@ import {
     UPDATE_TODO
 } from "../types";
 import {ScreenContext} from "../screen/screenContext";
+import {Http} from '../../http'
 
 export const TodoState = ({children}) => {
     const initialState = {
@@ -24,12 +25,7 @@ export const TodoState = ({children}) => {
     const [state, dispatch] = useReducer(todoReducer, initialState)
 
     const addTodo = async title => {
-        const response = await fetch('https://rn-todo-app-d816e.firebaseio.com/todos.json', {
-            method: 'POST',
-            headers: {'Content-Type': 'application.json'},
-            body: JSON.stringify({ title })
-        })
-        const data = await response.json()
+        const data = await Http.post('https://rn-todo-app-d816e.firebaseio.com/todos.json', {title})
         dispatch({type: ADD_TODO, title, id: data.name})
     }
 
@@ -46,8 +42,9 @@ export const TodoState = ({children}) => {
                 {
                     text: 'Yes',
                     style: 'destructive',
-                    onPress: () => {
+                    onPress: async () => {
                         changeScreen(null)
+                        await Http.delete(`https://rn-todo-app-d816e.firebaseio.com/todos/${id}.json`)
                         dispatch({type: REMOVE_TODO, id})
                     }
                 }
@@ -58,16 +55,29 @@ export const TodoState = ({children}) => {
     }
 
     const fetchTodos = async () => {
-        const response = await fetch('https://rn-todo-app-d816e.firebaseio.com/todos.json', {
-            method: 'GET',
-            headers: {'Content-Type': 'application.json'}
-        })
-        const data = await response.json()
-        const todos = Object.keys(data).map(key => ({ ...data[key], id: key }))
-        dispatch({ type: FETCH_TODOS, todos })
+        clearError()
+        showLoader()
+        try {
+            const data = await Http.get('https://rn-todo-app-d816e.firebaseio.com/todos.json')
+            const todos = Object.keys(data).map(key => ({ ...data[key], id: key }))
+            dispatch({ type: FETCH_TODOS, todos })
+        } catch (e) {
+            showError('error')
+        } finally {
+            hideLoader()
+        }
     }
 
-    const updateTodo = (id, title) => dispatch({type: UPDATE_TODO, id, title})
+    const updateTodo = async (id, title) => {
+        clearError()
+        try {
+            await Http.patch(`https://rn-todo-app-d816e.firebaseio.com/todos/${id}.json`, {title})
+            dispatch({type: UPDATE_TODO, id, title})
+        } catch (e) {
+            showError('error')
+        }
+
+    }
 
     const showLoader = () => dispatch({ type: SHOW_LOADER })
 
